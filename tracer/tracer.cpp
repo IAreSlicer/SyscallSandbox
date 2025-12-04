@@ -14,7 +14,7 @@
         }
         
         pid_t child = fork();
-        set<long> syscalls;
+        set<int> syscalls;
         
         // Traced process
         if (child == 0) {
@@ -45,12 +45,12 @@
                 ptrace(PTRACE_GETREGS, child, 0, &regs);
                 
                 // On linux x86_64, syscall number is in orig_rax
-                long syscall_num = regs.orig_rax;
+                int syscall_num = regs.orig_rax;
                 syscalls.insert(syscall_num);
             }
         }
         
-        for (long syscall_num : syscalls) {
+        for (int syscall_num : syscalls) {
             cout << syscall_num << endl;
         }
         
