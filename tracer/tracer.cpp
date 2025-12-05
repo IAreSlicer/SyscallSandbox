@@ -5,6 +5,7 @@
     #include <unistd.h>
     #include <iostream>
     #include <set>
+    #include <fstream>  
 
     using namespace std;
 
@@ -50,9 +51,40 @@
             }
         }
         
-        for (int syscall_num : syscalls) {
-            cout << syscall_num << endl;
+        
+   const char* output_file = "policy_syscalls.txt";
+
+    // Read syscalls from the file
+    std::set<int> all_syscalls;
+
+    {
+        std::ifstream in(output_file);
+        int num;
+
+        // If the file does not exist yet, the loop does nothing
+        while (in >> num) {
+            all_syscalls.insert(num);
         }
+    }
+
+    // Add the syscalls we saw in this run
+    for (int syscall_num : syscalls) {
+        all_syscalls.insert(syscall_num);
+    }
+
+    // Write the union back to the file (overwrite old content)
+    {
+        std::ofstream out(output_file, std::ios::trunc);
+        if (!out) {
+            std::cerr << "Failed to open " << output_file << " for writing\n";
+            return 1;
+        }
+
+        for (int syscall_num : all_syscalls) {
+            out << syscall_num << '\n';
+        }
+    }
+
         
         return 0;
     }
