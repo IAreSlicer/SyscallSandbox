@@ -1,25 +1,15 @@
 #include <linux/prctl.h>
 #include <sys/prctl.h>
-#include <sys/syscall.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <dlfcn.h>
 #include <errno.h>
 #include <ucontext.h>
 #include <fcntl.h>
-#include <sched.h>
-#include <cstdio>
 #include <cassert>
-#include <cstdlib>
-#include <cstring>
-#include <csignal>
-#include <cerrno>
 #include <cstdint>
-
-using namespace std;
 
 #define ASSERT_ELSE_PERROR(cond)	\
     do {							\
@@ -37,10 +27,6 @@ using namespace std;
 // taken from https://github.com/ColinIanKing/stress-ng/blob/master/stress-usersyscall.c
 #ifndef SYS_USER_DISPATCH
 # define SYS_USER_DISPATCH 2 /* syscall user dispatch triggered */
-#endif
-
-#ifndef CLONE_CLEAR_SIGHAND
-#define CLONE_CLEAR_SIGHAND 0x100000000ULL
 #endif
 
 extern "C" void* (syscall_dispatcher_start)(void);
@@ -124,7 +110,7 @@ static void handle_sigsys(int sig, siginfo_t* info, void* ucontextv) {
 		"movq $0xf, %%rax \n\t"
 		"leaveq \n\t"
 		"add $0x8, %%rsp \n\t"
-		".globl syscalll_dispatcher_start \n\t"
+		".globl syscall_dispatcher_start \n\t"
 		"syscall_dispatcher_start: \n\t"
 		"syscall \n\t"
 		"nop \n\t"
@@ -143,7 +129,7 @@ static void load_policy() {
     ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
     if (len == -1) {
         fprintf(stderr, "Cannot read /proc/self/exe.\n");
-        return;
+        _exit(1);
     }
     path[len] = '\0';
     
@@ -161,14 +147,14 @@ static void load_policy() {
     int fd = open(policy_file, O_RDONLY);
     if (fd < 0) {
         fprintf(stderr, "Policy file cannot be found.\n");
-        return;
+        _exit(1);
     }
     char buffer[4096];
     ssize_t bytes_read = read(fd, buffer, sizeof(buffer) - 1);
     close(fd);
     if (bytes_read <= 0) {
         fprintf(stderr, "Policy file is empty or could not be read.\n");
-        return;
+        _exit(1);
     }
     buffer[bytes_read] = '\0';
 
@@ -187,6 +173,11 @@ static void load_policy() {
         } else if (*ptr) {
             ptr++;
         }
+    }
+    
+    if (policy_count == 0) {
+        fprintf(stderr, "No syscalls found in policy file\n");
+        _exit(1);
     }
 }
 
