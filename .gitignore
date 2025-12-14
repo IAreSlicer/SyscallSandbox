@@ -1,0 +1,33 @@
+# Compiled binaries
+tracer/tracer
+sandbox/libsandbox.so
+sandbox/*.so
+example_app/hello_world
+example_app/hello_world_malicious
+
+# Object files
+*.o
+*.obj
+
+# Generated policy files
+tracer/policy_syscalls_*.txt
+policy/policy_syscalls_*.txt
+
+# Build artifacts
+*.a
+*.out
+
+# Core dumps
+core
+core.*
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
